@@ -1,0 +1,8 @@
+/*.txt
+/*.json
+/.idea/*
+/games/*
+/users/*
+/backup/*
+/steam_api.py
+/__pycache__/*
