@@ -9,13 +9,6 @@ import games_model_2 as gm2
 import games_data
 
 
-def hide_random_games(games, num_hidden):
-    non_zero_inds = np.argwhere(games > 0).flatten()
-    np.random.shuffle(non_zero_inds)
-    games[non_zero_inds[min(num_hidden, games.size):]] = 0.
-    return games
-
-
 def plot_games(indices, values, games):
     plt.figure(figsize=(18, 36))
     plot_num = 0
@@ -86,16 +79,17 @@ else:
 data_ledger = np.genfromtxt(file_conv_ledger, dtype=int)
 
 # Create model with 2 hidden layers and equal input/output dims
-model = gm2.GamesModel(0.001, [data.shape[1], 250, 250, data.shape[1]])
+model = gm2.GamesModel(0.001, [data.shape[1], 25, data.shape[1]])
 
-labels = data.copy()
-labels = np.array([hide_random_games(labels[i], 1) for i in range(0, labels.shape[0])])
+# labels = data.copy()
+# labels = np.array([hide_random_games(labels[i], 1) for i in range(0, labels.shape[0])])
 
 model.open_session()
-model.train(data=data, labels=labels, epochs=30000, batch_size=256, print_interval=100)
+model.train(data=data, epochs=1000, batch_size=256, print_interval=100)
 
 # Get recommendations from my personal steam id
 old_vals = gamedata.get_user_games_from_file('76561198067935522')
+# old_vals = gamedata.get_user_games_from_file('76561197960287930')
 old_vals = old_vals / np.sum(old_vals)
 old_vals = old_vals[data_ledger]
 
@@ -106,7 +100,79 @@ top_ind = np.argpartition(reco, -8)[-8:]
 # sort them by value in asc order and reverse to end with desc order
 top_ind = top_ind[np.argsort(reco[top_ind])][::-1]
 
-# plot_games(range(0, len(old_vals)), old_vals, [gamedata.get_game_from_index(data_ledger[i]) for i in range(0, len(old_vals))])
+print(model.test_loss([reco], [old_vals]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 plot_games(top_ind, reco[top_ind], [gamedata.get_game_from_index(data_ledger[i]) for i in top_ind])
 
 

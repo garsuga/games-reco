@@ -1,5 +1,11 @@
 import tensorflow as tf
+import numpy as np
 
+def hide_random_games(games, num_hidden):
+    non_zero_inds = np.argwhere(games > 0).flatten()
+    np.random.shuffle(non_zero_inds)
+    games[non_zero_inds[min(num_hidden, games.size):]] = 0.
+    return games
 
 class GamesModel:
     def __init__(self, learning_rate, dims):
@@ -59,11 +65,13 @@ class GamesModel:
     def close_session(self):
         self.session.close()
 
-    def train(self, data, labels, epochs, batch_size, print_interval=100):
+    def train(self, data, epochs, batch_size, print_interval=100):
         for epoch in range(1, epochs + 1):
             indices = range(epochs * batch_size, (epochs + 1) * batch_size)
             data_in = data.take(indices, axis=0, mode='wrap')
-            labels_in = labels.take(indices, axis=0, mode='wrap')
+            # labels_in = labels.take(indices, axis=0, mode='wrap')
+            labels_in = data_in.copy()
+            labels_in = np.array([hide_random_games(labels_in[i], 1) for i in range(0, labels_in.shape[0])])
 
             feed_dict = {
                 self.model['placeholders'][0]: data_in,
@@ -82,4 +90,12 @@ class GamesModel:
             self.model['placeholders'][1]: data
         }
         result = self.session.run([self.model['recommend']], feed_dict=feed_dict)[0]
+        return result
+
+    def test_loss(self, data, labels):
+        feed_dict = {
+            self.model['placeholders'][0]: data,
+            self.model['placeholders'][1]: labels
+        }
+        result = self.session.run([self.model['loss']], feed_dict=feed_dict)[0]
         return result
